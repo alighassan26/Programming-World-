@@ -1,0 +1,231 @@
+<!doctype html>
+
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>تطبيق الإنتاجية البسيط</title>
+  <style>
+    /* Basic reset */
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family: 'Segoe UI', Tahoma, sans-serif;background:#f5f7fa;color:#1f2937;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}
+    .card{width:100%;max-width:980px;background:white;border-radius:12px;box-shadow:0 6px 18px rgba(20,20,40,0.08);overflow:hidden;display:grid;grid-template-columns:1fr 360px}
+    header{grid-column:1/-1;padding:18px 24px;border-bottom:1px solid #eef2f7;background:linear-gradient(90deg,#fff 0,#fbfdff 100%)}
+    header h1{font-size:20px}/* Left: tasks & notes */
+.main{padding:18px 20px;display:flex;flex-direction:column;gap:14px}
+.row{display:flex;gap:12px}
+.tasks{flex:1;background:#fbfdff;padding:14px;border-radius:10px;border:1px solid #eef4fb}
+.notes{flex:1;background:#fffbf5;padding:14px;border-radius:10px;border:1px solid #fff0e6}
+.add{display:flex;gap:8px;margin-bottom:10px}
+input[type=text], textarea{flex:1;padding:10px;border-radius:8px;border:1px solid #e6ecf3}
+button{background:#2563eb;color:white;border:none;padding:8px 12px;border-radius:8px;cursor:pointer}
+button.ghost{background:transparent;color:#374151;border:1px solid #e6ecf3}
+
+ul{list-style:none;max-height:280px;overflow:auto;padding-right:6px}
+li{padding:10px;border-radius:8px;background:linear-gradient(180deg,#fff,#fbfdff);display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;border:1px solid #eef2f7}
+.item-left{display:flex;gap:10px;align-items:center}
+.checkbox{width:18px;height:18px;border-radius:4px;border:1px solid #cbd5e1;display:inline-block;cursor:pointer}
+.done{opacity:0.6;text-decoration:line-through}
+
+/* Right: timer & stats */
+.side{padding:18px;border-left:1px solid #f1f5f9;background:#fbfdff}
+.timer{background:white;padding:14px;border-radius:10px;border:1px solid #eef2f7;margin-bottom:12px}
+.time{font-size:34px;text-align:center;margin:8px 0}
+.controls{display:flex;gap:8px;justify-content:center}
+.small{font-size:13px;padding:6px 8px}
+
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.stat{background:white;padding:10px;border-radius:8px;border:1px solid #eef2f7;text-align:center}
+
+footer{padding:12px 18px;background:#ffffff;border-top:1px solid #eef2f7;text-align:center;font-size:13px;color:#6b7280}
+
+@media (max-width:880px){
+  .card{grid-template-columns:1fr;}
+  .side{border-left:0;border-top:1px solid #f1f5f9}
+}
+
+  </style>
+</head>
+<body>
+  <div class="card" role="application">
+    <header>
+      <h1>تطبيق الإنتاجية — مهام، ملاحظات، ومؤقت بومودورو</h1>
+    </header><section class="main">
+  <div class="tasks">
+    <h3>المهام</h3>
+    <div class="add">
+      <input id="newTask" type="text" placeholder="أضف مهمة جديدة..." aria-label="أضف مهمة" />
+      <button id="addTaskBtn">إضافة</button>
+    </div>
+    <ul id="tasksList" aria-live="polite"></ul>
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:8px">
+      <button class="ghost small" id="clearDone">مسح المنجزة</button>
+      <button class="ghost small" id="clearAll">مسح الكل</button>
+    </div>
+  </div>
+
+  <div class="notes">
+    <h3>ملاحظة سريعة</h3>
+    <textarea id="noteText" rows="8" placeholder="اكتب ملاحظة..."></textarea>
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:8px">
+      <button id="saveNoteBtn">حفظ الملاحظة</button>
+      <button class="ghost" id="clearNoteBtn">مسح</button>
+    </div>
+  </div>
+
+  <div style="grid-column:1/-1"></div>
+</section>
+
+<aside class="side">
+  <div class="timer">
+    <h3>مؤقت بومودورو</h3>
+    <div style="display:flex;gap:8px;justify-content:center;margin-top:6px">
+      <button class="small" data-min="25">25</button>
+      <button class="small" data-min="15">15</button>
+      <button class="small" data-min="5">5</button>
+    </div>
+    <div class="time" id="timeDisplay">25:00</div>
+    <div class="controls">
+      <button id="startBtn">ابدأ</button>
+      <button id="pauseBtn" class="ghost">إيقاف مؤقت</button>
+      <button id="resetBtn" class="ghost">إعادة</button>
+    </div>
+  </div>
+
+  <div class="stats">
+    <div class="stat">
+      <div style="font-weight:700" id="totalTasks">0</div>
+      <div>المهام الكلية</div>
+    </div>
+    <div class="stat">
+      <div style="font-weight:700" id="doneTasks">0</div>
+      <div>مُنَجَزَة</div>
+    </div>
+  </div>
+
+  <div style="margin-top:12px;font-size:13px;color:#6b7280">حفظ محليًا في المتصفح — يعمل بدون إنترنت</div>
+</aside>
+
+<footer>نسخة جاهزة للرفع على GitHub Pages — عدّلي العنوان والمحتوى كما تحبين.</footer>
+
+  </div>  <script>
+    // ----- Storage keys -----
+    const TASKS_KEY = 'prod.tasks.v1';
+    const NOTE_KEY = 'prod.note.v1';
+    const TIMER_KEY = 'prod.timer.v1';
+
+    // ----- Elements -----
+    const newTask = document.getElementById('newTask');
+    const addTaskBtn = document.getElementById('addTaskBtn');
+    const tasksList = document.getElementById('tasksList');
+    const clearDone = document.getElementById('clearDone');
+    const clearAll = document.getElementById('clearAll');
+
+    const noteText = document.getElementById('noteText');
+    const saveNoteBtn = document.getElementById('saveNoteBtn');
+    const clearNoteBtn = document.getElementById('clearNoteBtn');
+
+    const totalTasks = document.getElementById('totalTasks');
+    const doneTasks = document.getElementById('doneTasks');
+
+    // Timer
+    const timeDisplay = document.getElementById('timeDisplay');
+    const startBtn = document.getElementById('startBtn');
+    const pauseBtn = document.getElementById('pauseBtn');
+    const resetBtn = document.getElementById('resetBtn');
+    const minuteBtns = document.querySelectorAll('[data-min]');
+
+    // ----- Data -----
+    let tasks = JSON.parse(localStorage.getItem(TASKS_KEY) || '[]');
+    let note = localStorage.getItem(NOTE_KEY) || '';
+    let timerState = JSON.parse(localStorage.getItem(TIMER_KEY) || '{}');
+
+    // ----- Helpers -----
+    function saveTasks(){ localStorage.setItem(TASKS_KEY, JSON.stringify(tasks)); }
+    function renderTasks(){
+      tasksList.innerHTML = '';
+      tasks.forEach((t, i)=>{
+        const li = document.createElement('li');
+        const left = document.createElement('div'); left.className='item-left';
+        const cb = document.createElement('span'); cb.className='checkbox'; cb.tabIndex=0;
+        if(t.done) cb.style.background = '#a3e635';
+        const span = document.createElement('span'); span.textContent = t.text; if(t.done) span.className='done';
+        left.appendChild(cb); left.appendChild(span);
+        const actions = document.createElement('div');
+        const del = document.createElement('button'); del.textContent='حذف'; del.className='ghost small';
+        actions.appendChild(del);
+        li.appendChild(left); li.appendChild(actions);
+
+        // events
+        cb.addEventListener('click', ()=>{ tasks[i].done = !tasks[i].done; saveTasks(); renderTasks(); updateStats(); });
+        cb.addEventListener('keydown', (e)=>{ if(e.key==='Enter') cb.click(); });
+        del.addEventListener('click', ()=>{ tasks.splice(i,1); saveTasks(); renderTasks(); updateStats(); });
+
+        tasksList.appendChild(li);
+      });
+    }
+
+    function updateStats(){ totalTasks.textContent = tasks.length; doneTasks.textContent = tasks.filter(t=>t.done).length; }
+
+    // ----- Task events -----
+    addTaskBtn.addEventListener('click', ()=>{ const v=newTask.value.trim(); if(!v) return; tasks.unshift({text:v,done:false}); saveTasks(); renderTasks(); updateStats(); newTask.value=''; newTask.focus(); });
+    newTask.addEventListener('keydown', (e)=>{ if(e.key==='Enter') addTaskBtn.click(); });
+    clearDone.addEventListener('click', ()=>{ tasks = tasks.filter(t=>!t.done); saveTasks(); renderTasks(); updateStats(); });
+    clearAll.addEventListener('click', ()=>{ if(!confirm('هل تريد مسح كل المهام؟')) return; tasks = []; saveTasks(); renderTasks(); updateStats(); });
+
+    // ----- Notes -----
+    noteText.value = note;
+    saveNoteBtn.addEventListener('click', ()=>{ note = noteText.value; localStorage.setItem(NOTE_KEY,note); alert('تم الحفظ محليًا'); });
+    clearNoteBtn.addEventListener('click', ()=>{ noteText.value=''; note=''; localStorage.removeItem(NOTE_KEY); });
+
+    // ----- Timer logic -----
+    let timerInterval = null;
+    function formatTime(s){ const m = Math.floor(s/60); const sec = s%60; return String(m).padStart(2,'0')+':'+String(sec).padStart(2,'0'); }
+
+    function startTimer(seconds){
+      if(timerInterval) clearInterval(timerInterval);
+      let remaining = seconds;
+      timeDisplay.textContent = formatTime(remaining);
+      timerInterval = setInterval(()=>{
+        remaining--; timeDisplay.textContent = formatTime(remaining);
+        if(remaining<=0){ clearInterval(timerInterval); timerInterval=null; alert('انتهى الوقت!'); }
+      },1000);
+      timerState = {running:true,remaining:remaining,total:seconds,startedAt:Date.now()};
+      localStorage.setItem(TIMER_KEY,JSON.stringify(timerState));
+    }
+
+    function pauseTimer(){ if(!timerInterval) return; clearInterval(timerInterval); timerInterval=null; timerState.running=false; localStorage.setItem(TIMER_KEY,JSON.stringify(timerState)); }
+    function resetTimer(){ if(timerInterval) clearInterval(timerInterval); timerInterval=null; timeDisplay.textContent = formatTime(25*60); timerState={}; localStorage.removeItem(TIMER_KEY); }
+
+    startBtn.addEventListener('click', ()=>{
+      const txt = timeDisplay.textContent.split(':'); const minutes = parseInt(txt[0],10); const seconds = minutes*60 + parseInt(txt[1],10);
+      startTimer(seconds);
+    });
+    pauseBtn.addEventListener('click', ()=>{ pauseTimer(); });
+    resetBtn.addEventListener('click', ()=>{ if(confirm('إعادة المؤقت إلى 25 دقيقة؟')) resetTimer(); });
+
+    minuteBtns.forEach(b=>{ b.addEventListener('click', ()=>{ const m = parseInt(b.dataset.min,10); timeDisplay.textContent = formatTime(m*60); }); });
+
+    // ----- Init render -----
+    renderTasks(); updateStats();
+
+    // restore timer display if saved
+    if(timerState && timerState.total){
+      if(timerState.running){
+        // best-effort: resume with remaining if possible
+        const elapsed = Math.floor((Date.now() - (timerState.startedAt||Date.now()))/1000);
+        const rem = Math.max(0,(timerState.total - elapsed));
+        timeDisplay.textContent = formatTime(rem);
+      } else if(timerState.remaining){
+        timeDisplay.textContent = formatTime(timerState.remaining);
+      }
+    }
+
+    // Accessibility: simple keyboard focus styles
+    document.addEventListener('keydown', (e)=>{ if(e.key==='/' && document.activeElement.tagName!=='INPUT' && document.activeElement.tagName!=='TEXTAREA'){ e.preventDefault(); newTask.focus(); } });
+
+    // small helper: prevent accidental page unload if timer is running
+    window.addEventListener('beforeunload', (e)=>{ if(timerInterval){ e.returnValue='هناك مؤقت شغّال — هل تريد الخروج؟'; return e.returnValue; } });
+
+  </script></body>
+</html>
